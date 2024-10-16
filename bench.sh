@@ -13,30 +13,42 @@
 # implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+export PATH="${HOME}/.jsvu/bin:${PATH}"
+
 binaries="
-  v8-7.5.288
-  v8-7.6.303
-  v8-7.7.299
-  v8-7.8.279
   v8
-  chakra
   javascriptcore
   spidermonkey
 ";
+END_FILE_SIZE_I=19
 TIMEFORMAT=%lR;
 for bin in $binaries; do
-  printf "Benchmarking JS literal on ${bin}… ";
-  time (for i in {1..100}; do $bin out/js.js; done);
-  printf "Benchmarking JSON.parse on ${bin}… ";
-  time (for i in {1..100}; do $bin out/json.js; done);
-  if [[ $bin == v8* ]]; then
-    printf "Benchmarking JS literal with cold loads on ${bin}…\n";
-    time $bin realm-js.js --nocompilation-cache;
-    printf "Benchmarking JSON.parse with cold loads on ${bin}…\n";
-    time $bin realm-json.js --nocompilation-cache;
-    printf "Benchmarking JS literal with warm loads on ${bin}…\n";
-    time $bin realm-js.js;
-    printf "Benchmarking JSON.parse with warm loads on ${bin}…\n";
-    time $bin realm-json.js;
-  fi;
-done;
+  for i in $(seq 1 $END_FILE_SIZE_I); do
+    file_size=$(( i * 10 ))
+    JS_FILE="out/js.${file_size}.js"
+    JSON_FILE="out/json.${file_size}.js"
+
+    printf "Benchmarking JS literal on ${bin} for ${JS_FILE}… ";
+    time (for _ in {1..100}; do $bin "${JS_FILE}"; done);
+    printf "Benchmarking JSON.parse on ${bin} for ${JSON_FILE}… ";
+    time (for _ in {1..100}; do $bin "${JSON_FILE}"; done);
+
+    # if [[ $bin == v8* ]]; then
+    #   printf "Benchmarking JS literal with cold loads on ${bin}…\n";
+    #   time $bin realm-js.js --nocompilation-cache;
+    #   printf "Benchmarking JSON.parse with cold loads on ${bin}…\n";
+    #   time $bin realm-json.js --nocompilation-cache;
+    #   printf "Benchmarking JS literal with warm loads on ${bin}…\n";
+    #   time $bin realm-js.js;
+    #   printf "Benchmarking JSON.parse with warm loads on ${bin}…\n";
+    #   time $bin realm-json.js;
+    # fi;
+  done
+
+  JS_FILE="out/js.js"
+  JSON_FILE="out/json.js"
+  printf "Benchmarking JS literal on ${bin} for ${JS_FILE}… ";
+  time (for _ in {1..100}; do $bin "${JS_FILE}"; done);
+  printf "Benchmarking JSON.parse on ${bin} for ${JSON_FILE}… ";
+  time (for _ in {1..100}; do $bin "${JSON_FILE}"; done);
+done
